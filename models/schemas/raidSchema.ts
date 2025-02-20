@@ -1,9 +1,22 @@
 import { Schema } from "mongoose";
+import { BaseModel } from "../entities/baseModel.js";
 
-export interface IRaid {
+export interface IRaid extends BaseModel {
     users: string[];
     raid: string;
     timestamp: number;
+}
+
+export interface IRaidRewardsResponse {
+    username: string;
+    raids: number;
+    aspects: number;
+    liquidEmeralds: number;
+}
+
+export interface ILeaderboardUser {
+    username: string;
+    raids: number;
 }
 
 const raidSchema: Schema<IRaid> = new Schema({

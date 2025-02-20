@@ -1,24 +1,14 @@
-import express, {NextFunction, Request, Response, Router} from "express";
+import express from "express";
 import app, {server} from "./app.js";
 import {connect} from "mongoose";
 import bodyParser from "body-parser";
 import cors from "cors";
 import "./config";
-import statusRouter from "./routes/status.js";
-import raidRouter from "./routes/guild/raids.js";
-import tomeRouter from "./routes/guild/tomes.js";
-import modVersionRouter from "./routes/modVersion.js";
 import "./sockets/discord.js";
-import healthRouter from "./routes/healthCheck.js";
-import userInfoRouter from "./routes/userInfo.js";
-import configRouter from "./routes/serverConfig.js";
-import onlineRouter from "./routes/guild/online.js";
-import waitlistRouter from "./routes/guild/waitlist.js";
-import authenticationRouter from "./routes/guild/security/authentication.js";
 import {registerMessageIndexes} from "./sockets/discord.js";
-import adminRouter from "./routes/admin.js";
-import {GuildDatabaseCreator} from "./services/GuildDatabaseCreator.js";
+import {GuildDatabaseCreator} from "./services/guild/guildDatabaseCreator.js";
 import {errorHandler} from "./middleware/errorHandler.middleware.js";
+import {mapEndpoints} from "./endpoints.js";
 
 app.use(express.json());
 app.use(cors());
@@ -43,43 +33,5 @@ try {
     console.error("Failed to connect to database:", error);
 }
 
-const guildRouter = Router({mergeParams: true});
-const apiVersion = "v2";
-
-app.use("/api/:version*", (request: Request<{ version: string }>, response: Response, next: NextFunction) => {
-    if (request.params.version !== apiVersion) {
-        response.status(301).send({error: `please use /api/${apiVersion}`});
-        return;
-    }
-    next();
-});
-
-// Map all endpoints that don't require guild id
-app.use("/", statusRouter);
-
-app.use("/healthz", healthRouter);
-
-app.use("/admin", adminRouter);
-
-app.use(`/api/${apiVersion}/mod`, modVersionRouter);
-
-app.use(`/api/${apiVersion}/user`, userInfoRouter);
-
-app.use(`/api/${apiVersion}/config`, configRouter);
-
-app.use(`/api/${apiVersion}/guilds`, guildRouter);
-
-// Map endpoints that require guild id
-guildRouter.use("/auth", authenticationRouter);
-guildRouter.use("/online", onlineRouter);
-guildRouter.use("/raids", raidRouter);
-// guildRouter.use("/aspects", aspectRouter);
-guildRouter.use("/tomes", tomeRouter);
-guildRouter.use("/waitlist", waitlistRouter);
-
-// Catch all for incorrect routes
-app.all("*", (_: Request, response: Response) => {
-    response.status(404).send({error: "not found"});
-});
-
+mapEndpoints(app);
 app.use(errorHandler);
